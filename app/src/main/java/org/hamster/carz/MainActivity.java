@@ -1,5 +1,6 @@
 package org.hamster.carz;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
@@ -37,13 +38,24 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     BluetoothCarConnection.CarConnectionState state = connection.getState();
-                    BluetoothDevice device = connection.getTargetDevice();
+                    final BluetoothDevice device = connection.getTargetDevice();
 
                     switch (state) {
                         case STATE_FAILED:
-                            Snackbar.make(mRootView, "Connection with " + btDevToStr(device)
+                            final Snackbar bar = Snackbar.make(mRootView, "Connection with " + btDevToStr(device)
                                             + " failed! Caused by: " + connection.getErrorMessage(),
-                                    Snackbar.LENGTH_INDEFINITE).show();
+                                    Snackbar.LENGTH_INDEFINITE);
+                            bar.setAction("View All", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                    builder.setMessage("Connection with " + btDevToStr(device)
+                                            + " failed! Caused by: " + connection.getErrorMessage());
+                                    builder.setPositiveButton("OK", null);
+                                    builder.show();
+                                }
+                            });
+                            bar.show();
                             break;
                         case STATE_CONNECTING:
                             /* Will be replaced by later snacks */
