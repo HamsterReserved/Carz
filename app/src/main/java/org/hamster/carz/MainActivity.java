@@ -2,9 +2,12 @@ package org.hamster.carz;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -22,24 +25,28 @@ public class MainActivity extends AppCompatActivity {
 
     private View mRootView;
     private Handler mHandler;
+    private boolean isServiceRunning = false;
+    private BluetoothDevice mDeviceToConnect;
     private BluetoothDeviceManager mBluetoothManager;
     private BluetoothCarConnection.ConnectionStateChangeListener
             bluetoothStateChangeListener = new BluetoothCarConnection.ConnectionStateChangeListener() {
         @Override
-        public void onCarConnectionStateChanged(final BluetoothCarConnection.CarConnectionState state,
-                                                final BluetoothDevice device) {
+        public void onCarConnectionStateChanged(final BluetoothCarConnection connection) {
 
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
+                    BluetoothCarConnection.CarConnectionState state = connection.getState();
+                    BluetoothDevice device = connection.getTargetDevice();
+
                     switch (state) {
                         case STATE_FAILED:
-                            Snackbar.make(mRootView, "Connection with " + btDevToStr(device) + " failed!",
-                                    Snackbar.LENGTH_LONG).show();
+                            Snackbar.make(mRootView, "Connection with " + btDevToStr(device)
+                                            + " failed! Caused by: " + connection.getErrorMessage(),
+                                    Snackbar.LENGTH_INDEFINITE).show();
                             break;
                         case STATE_CONNECTING:
                             /* Will be replaced by later snacks */
-                            Log.d(TAG, "run: STATE_CONNECTING");
                             Snackbar.make(mRootView, "Connecting to " + btDevToStr(device) + "\u2026",
                                     Snackbar.LENGTH_INDEFINITE).show();
                             break;
@@ -49,24 +56,46 @@ public class MainActivity extends AppCompatActivity {
                             break;
                     }
                 }
-            }, 200);
+            }, 200); // delay 200ms to let the slide-in animation display correctly
+        }
+    };
+    private BluetoothService.BluetoothServiceBinder mBinder;
+    private ServiceConnection btServiceConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            if (VDBG) Log.d(TAG, "onServiceConnected: +1");
+            isServiceRunning = true;
+            mBinder = (BluetoothService.BluetoothServiceBinder) service;
+            if (mDeviceToConnect != null) {
+                mBinder.getService().connect(mDeviceToConnect, bluetoothStateChangeListener);
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            if (VDBG) Log.d(TAG, "onServiceDisconnected: -1");
         }
     };
     private BluetoothDeviceManager.BluetoothDevicePickResultHandler
             bluetoothDevicePickResultHandler = new BluetoothDeviceManager.BluetoothDevicePickResultHandler() {
         @Override
         public void onDevicePicked(BluetoothDevice device) {
-            BluetoothCarConnectionManager.getInstance().initializeConnection(device, bluetoothStateChangeListener);
+            Intent intent = new Intent();
+            intent.setClass(MainActivity.this, BluetoothService.class);
+            bindService(intent, btServiceConn, BIND_AUTO_CREATE);
+            mDeviceToConnect = device;
         }
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         mRootView = findViewById(R.id.coordinatorLayout);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         mHandler = new Handler();
         mBluetoothManager = new BluetoothDeviceManager(this);
 
@@ -74,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /* If BT is on, we show device picker here. Or we show in onActivityResult */
+                /* If BT is on, we launch device picker here. Or we launch in onActivityResult */
                 if (requestBluetoothOn())
                     mBluetoothManager.pickDevice(bluetoothDevicePickResultHandler);
             }
@@ -101,6 +130,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (isServiceRunning) unbindService(btServiceConn);
     }
 
     private String btDevToStr(BluetoothDevice device) {
@@ -132,10 +167,6 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Mainly for activating Bluetooth
-     *
-     * @param requestCode
-     * @param resultCode
-     * @param data
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

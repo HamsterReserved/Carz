@@ -1,8 +1,14 @@
 package org.hamster.carz;
 
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.UUID;
 
 /**
  * Created by Hamster on 2015/12/19.
@@ -10,20 +16,34 @@ import android.support.annotation.Nullable;
  * Represents a connection to a car. Handles data transfer.
  */
 public class BluetoothCarConnection {
+    private static final String TAG = "Carz_BTCarConn";
     private BluetoothDevice mBluetoothDevice;
-    private CarConnectionState mState;
+    private BluetoothSocket mSocket;
+    private OutputStream mOutputStream;
+    private String mErrorMessage;
+    private CarConnectionState mLastState = CarConnectionState.STATE_NOT_CONNECTED;
+    private CarConnectionState mState = CarConnectionState.STATE_NOT_CONNECTED;
     private ConnectionStateChangeListener mListener;
+    private UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     BluetoothCarConnection(@NonNull BluetoothDevice device,
                            @Nullable ConnectionStateChangeListener listener) {
-        mBluetoothDevice = device;
-        mListener = listener;
-        setState(CarConnectionState.STATE_NOT_CONNECTED);
+        update(device, listener);
     }
 
     public void connect() {
         setState(CarConnectionState.STATE_CONNECTING);
-        // TODO establish real SPP connection to the device
+        try {
+            mSocket = mBluetoothDevice.createRfcommSocketToServiceRecord(SPP_UUID);
+            mSocket.connect();
+            mOutputStream = mSocket.getOutputStream();
+        } catch (IOException e) { // One IOException catches them all. Can be distinguished by e.
+            setState(CarConnectionState.STATE_FAILED);
+            mErrorMessage = e.getLocalizedMessage();
+            Log.e(TAG, "connect: operation failed: ", e);
+            return;
+        }
+        setState(CarConnectionState.STATE_CONNECTED);
     }
 
     public BluetoothDevice getTargetDevice() {
@@ -31,6 +51,14 @@ public class BluetoothCarConnection {
     }
 
     public void disconnect() {
+        try {
+            mSocket.close();
+        } catch (IOException e) {
+            setState(CarConnectionState.STATE_FAILED);
+            Log.e(TAG, "disconnect: socket close failed", e);
+            return;
+        }
+        mState = CarConnectionState.STATE_NOT_CONNECTED;
     }
 
     public CarConnectionState getState() {
@@ -38,10 +66,38 @@ public class BluetoothCarConnection {
     }
 
     private void setState(CarConnectionState newState) {
+        mLastState = mState;
         mState = newState;
         if (mListener != null) {
-            mListener.onCarConnectionStateChanged(mState, mBluetoothDevice);
+            mListener.onCarConnectionStateChanged(this);
         }
+    }
+
+    public CarConnectionState getLastState() {
+        return mLastState;
+    }
+
+    public String getErrorMessage() {
+        return mErrorMessage;
+    }
+
+    /**
+     * For re-use the connection object. This will cause a disconnection before updating.
+     *
+     * @param device   Target device
+     * @param listener Can be null. Callback when connection state changes.
+     */
+    public void update(@NonNull BluetoothDevice device,
+                       @Nullable ConnectionStateChangeListener listener) {
+        if (mState == CarConnectionState.STATE_CONNECTED) {
+            disconnect();
+        } else if (mState == CarConnectionState.STATE_CONNECTING) {
+            Log.i(TAG, "update: The previous connection is CONNECTING.");
+            // TODO: 2015/12/19 disconnect();?
+        }
+        mBluetoothDevice = device;
+        mListener = listener;
+        setState(CarConnectionState.STATE_NOT_CONNECTED);
     }
 
     public enum CarConnectionState {
@@ -52,8 +108,6 @@ public class BluetoothCarConnection {
     }
 
     public interface ConnectionStateChangeListener {
-        void onCarConnectionStateChanged(CarConnectionState state, BluetoothDevice device);
+        void onCarConnectionStateChanged(BluetoothCarConnection connection);
     }
-
-
 }
