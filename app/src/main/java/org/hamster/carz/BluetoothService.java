@@ -8,6 +8,8 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.io.IOException;
+
 /**
  * Created by Hamster on 2015/12/19.
  * <p/>
@@ -40,6 +42,14 @@ public class BluetoothService extends Service {
 
     public BluetoothCarConnection.CarConnectionState getConnectionState() {
         return mConnection.getState();
+    }
+
+    public void sendBytes(byte[] data) {
+        try {
+            mConnection.getOutputStream().write(data);
+        } catch (IOException e) {
+            Log.e(TAG, "sendBytes: IO", e);
+        }
     }
 
     public void disconnect() {

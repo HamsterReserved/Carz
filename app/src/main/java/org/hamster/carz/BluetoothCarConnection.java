@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
@@ -20,11 +21,26 @@ public class BluetoothCarConnection {
     private BluetoothDevice mBluetoothDevice;
     private BluetoothSocket mSocket;
     private OutputStream mOutputStream;
+    private boolean stopDetectionFlag;
+    private InputStream mInputStream;
     private String mErrorMessage;
     private CarConnectionState mLastState = CarConnectionState.STATE_NOT_CONNECTED;
     private CarConnectionState mState = CarConnectionState.STATE_NOT_CONNECTED;
     private ConnectionStateChangeListener mListener;
     private UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private Thread detectionThread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            while (!stopDetectionFlag) {
+                try {
+                    mInputStream.read();
+                } catch (IOException e) {
+                    setState(CarConnectionState.STATE_NOT_CONNECTED);
+                    stopDetectionFlag = true;
+                }
+            }
+        }
+    });
 
     BluetoothCarConnection(@NonNull BluetoothDevice device,
                            @Nullable ConnectionStateChangeListener listener) {
@@ -37,12 +53,16 @@ public class BluetoothCarConnection {
             mSocket = mBluetoothDevice.createRfcommSocketToServiceRecord(SPP_UUID);
             mSocket.connect();
             mOutputStream = mSocket.getOutputStream();
+            mInputStream = mSocket.getInputStream();
         } catch (IOException e) { // One IOException catches them all. Can be distinguished by e.
             setState(CarConnectionState.STATE_FAILED);
             mErrorMessage = e.getLocalizedMessage();
             Log.e(TAG, "connect: operation failed: ", e);
             return;
         }
+
+        stopDetectionFlag = false;
+        detectionThread.start();
         setState(CarConnectionState.STATE_CONNECTED);
     }
 
@@ -52,6 +72,7 @@ public class BluetoothCarConnection {
 
     public void disconnect() {
         try {
+            stopDetectionFlag = true; // Break the loop
             mSocket.close();
         } catch (IOException e) {
             setState(CarConnectionState.STATE_FAILED);
@@ -75,6 +96,10 @@ public class BluetoothCarConnection {
 
     public CarConnectionState getLastState() {
         return mLastState;
+    }
+
+    public OutputStream getOutputStream() {
+        return mOutputStream;
     }
 
     public String getErrorMessage() {

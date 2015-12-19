@@ -54,6 +54,12 @@ public class MainActivity extends AppCompatActivity {
                             Snackbar.make(mRootView, "Connected with " + btDevToStr(device) + ".",
                                     Snackbar.LENGTH_LONG).show();
                             break;
+                        case STATE_NOT_CONNECTED:
+                            if (connection.getLastState() ==
+                                    BluetoothCarConnection.CarConnectionState.STATE_CONNECTED)
+                                Snackbar.make(mRootView, "Disconnected with " + btDevToStr(device) + ".",
+                                        Snackbar.LENGTH_LONG).show();
+                            break;
                     }
                 }
             }, 200); // delay 200ms to let the slide-in animation display correctly
