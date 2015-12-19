@@ -1,15 +1,20 @@
 package org.hamster.carz;
 
+import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "Carz-MainActivity";
+    private static final boolean VDBG = true;
+    private static final int FILTER_TYPE_ALL = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,10 +27,22 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                if (VDBG)
+                    Log.v(TAG, "FAB click, starting BT device chooser.");
+
+                BluetoothDeviceManager.BluetoothDevicePickResultHandler handler;
+                handler = new BluetoothDeviceManager.BluetoothDevicePickResultHandler() {
+                    @Override
+                    public void onDevicePicked(BluetoothDevice device) {
+                        Log.v(TAG, "Device picked, name=" + device.getName() + " address=" + device.getAddress());
+                    }
+                };
+
+                BluetoothDeviceManager manager = new BluetoothDeviceManager(MainActivity.this);
+                manager.pickDevice(handler);
             }
         });
+
     }
 
     @Override
