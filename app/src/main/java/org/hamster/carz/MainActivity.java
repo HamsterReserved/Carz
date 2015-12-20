@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -268,5 +269,11 @@ public class MainActivity extends AppCompatActivity {
         });
         valueAnimator.setDuration(duration);
         valueAnimator.start();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mRootView.requestLayout();
     }
 }
