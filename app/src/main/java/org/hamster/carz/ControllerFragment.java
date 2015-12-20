@@ -1,10 +1,14 @@
 package org.hamster.carz;
 
 import android.app.Fragment;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import android.os.Handler;
+import android.os.IBinder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,22 +20,58 @@ import android.view.ViewGroup;
  */
 public class ControllerFragment extends Fragment {
     private View mRootView;
+    private BluetoothService.BluetoothServiceBinder mBinder;
+    private View.OnClickListener fabOnClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            mBinder.getService().disconnect();
+        }
+    };
+    private ServiceConnection btServConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mBinder = (BluetoothService.BluetoothServiceBinder) service;
+        }
 
-    @Nullable
-    @Override
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
+
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getActivity().getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        final MainActivity activity = (MainActivity) getActivity();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                activity.hideBars();
+            }
+        }, 500);
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
+        Intent intent = new Intent();
+        intent.setClass(getActivity(), BluetoothService.class);
+        getActivity().bindService(intent, btServConn, 0);
+
         mRootView = inflater.inflate(R.layout.frag_controller, container, false);
+        mRootView.findViewById(R.id.fab_disconnect).setOnClickListener(fabOnClickListener);
         return mRootView;
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        mRootView.requestLayout();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        final MainActivity activity = (MainActivity) getActivity();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                activity.showBars();
+            }
+        }, 500);
     }
 }

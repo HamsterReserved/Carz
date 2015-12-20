@@ -24,8 +24,8 @@ public class BluetoothCarConnection {
     private boolean stopDetectionFlag;
     private InputStream mInputStream;
     private String mErrorMessage;
-    private CarConnectionState mLastState = CarConnectionState.STATE_NOT_CONNECTED;
-    private CarConnectionState mState = CarConnectionState.STATE_NOT_CONNECTED;
+    private CarConnectionState mLastState = CarConnectionState.STATE_DISCONNECTED;
+    private CarConnectionState mState = CarConnectionState.STATE_DISCONNECTED;
     private ConnectionStateChangeListener mListener;
     private UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private Thread detectionThread = new Thread(new Runnable() {
@@ -35,7 +35,7 @@ public class BluetoothCarConnection {
                 try {
                     mInputStream.read();
                 } catch (IOException e) {
-                    setState(CarConnectionState.STATE_NOT_CONNECTED);
+                    setState(CarConnectionState.STATE_DISCONNECTED);
                     stopDetectionFlag = true;
                 }
             }
@@ -71,15 +71,20 @@ public class BluetoothCarConnection {
     }
 
     public void disconnect() {
+        setState(CarConnectionState.STATE_DISCONNECTING);
         try {
             stopDetectionFlag = true; // Break the loop
             mSocket.close();
+            detectionThread.join(); // Wait for finish
+            mState = mLastState; // Recover the state destroyed by detectionThread
         } catch (IOException e) {
             setState(CarConnectionState.STATE_FAILED);
             Log.e(TAG, "disconnect: socket close failed", e);
             return;
+        } catch (InterruptedException e) {
+            // do nothing
         }
-        mState = CarConnectionState.STATE_NOT_CONNECTED;
+        setState(CarConnectionState.STATE_DISCONNECTED);
     }
 
     public CarConnectionState getState() {
@@ -134,13 +139,14 @@ public class BluetoothCarConnection {
         }
         mBluetoothDevice = device;
         mListener = listener;
-        setState(CarConnectionState.STATE_NOT_CONNECTED);
+        setState(CarConnectionState.STATE_DISCONNECTED);
     }
 
     public enum CarConnectionState {
-        STATE_NOT_CONNECTED,
+        STATE_DISCONNECTED,
         STATE_CONNECTING,
         STATE_FAILED,
+        STATE_DISCONNECTING,
         STATE_CONNECTED
     }
 
