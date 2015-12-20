@@ -246,8 +246,6 @@ public class MainActivity extends AppCompatActivity {
         ObjectAnimator.ofFloat(mFAB, "alpha", 1f, 0f).setDuration(500).start();
         mFAB.setVisibility(View.GONE);
 
-        mRootView.setBackgroundColor(getResources().getColor(android.R.color.black));
-
         mMenu.getItem(0).setVisible(true);
         mToolbar.setTitle(getString(R.string.app_name) + " - " + device.getName());
         getFragmentManager()
@@ -271,7 +269,6 @@ public class MainActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(R.id.frame_container, new NoDeviceFragment())
                 .commit();
-        mRootView.setBackground(null);
     }
 
     private void animateToolbarColor(@ColorRes int oldColor, @ColorRes int newColor, long duration) {
