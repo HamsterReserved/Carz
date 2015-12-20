@@ -1,5 +1,8 @@
 package org.hamster.carz;
 
+import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -9,6 +12,8 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.annotation.ColorRes;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -24,9 +29,14 @@ public class MainActivity extends AppCompatActivity {
     private static final boolean VDBG = true;
     private static final int REQCODE_BLUETOOTH_ON = 0;
 
-    private View mRootView;
+    private CoordinatorLayout mRootView;
+    private Toolbar mToolbar;
+    private FloatingActionButton mFAB;
+    private Menu mMenu;
+
     private Handler mHandler;
     private boolean isServiceRunning = false;
+
     private BluetoothDevice mDeviceToConnect;
     private BluetoothDeviceManager mBluetoothManager;
     private BluetoothCarConnection.ConnectionStateChangeListener
@@ -40,37 +50,43 @@ public class MainActivity extends AppCompatActivity {
                     BluetoothCarConnection.CarConnectionState state = connection.getState();
                     final BluetoothDevice device = connection.getTargetDevice();
 
+                    /* We do only snackbars here. Other layout changes will be in separate methods */
                     switch (state) {
                         case STATE_FAILED:
-                            final Snackbar bar = Snackbar.make(mRootView, "Connection with " + btDevToStr(device)
-                                            + " failed! Caused by: " + connection.getErrorMessage(),
+                            final String errMsg = "Connection with " + btDevToStr(device)
+                                    + " failed! Caused by: " + connection.getErrorMessage();
+                            final Snackbar bar = Snackbar.make(mRootView, errMsg,
                                     Snackbar.LENGTH_INDEFINITE);
                             bar.setAction("View All", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
                                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                                    builder.setMessage("Connection with " + btDevToStr(device)
-                                            + " failed! Caused by: " + connection.getErrorMessage());
+                                    builder.setMessage(errMsg);
                                     builder.setPositiveButton("OK", null);
                                     builder.show();
                                 }
                             });
                             bar.show();
+                            // don't call onBluetoothDisconnected here
+                            // since this state will only trigger when connection failed
                             break;
                         case STATE_CONNECTING:
                             /* Will be replaced by later snacks */
-                            Snackbar.make(mRootView, "Connecting to " + btDevToStr(device) + "\u2026",
+                            Snackbar.make(mRootView, "Connecting with " + btDevToStr(device) + "\u2026",
                                     Snackbar.LENGTH_INDEFINITE).show();
                             break;
                         case STATE_CONNECTED:
-                            Snackbar.make(mRootView, "Connected with " + btDevToStr(device) + ".",
+                            Snackbar.make(mRootView, "Connected to " + btDevToStr(device) + ".",
                                     Snackbar.LENGTH_LONG).show();
+                            onBluetoothConnected(device);
                             break;
                         case STATE_NOT_CONNECTED:
                             if (connection.getLastState() ==
-                                    BluetoothCarConnection.CarConnectionState.STATE_CONNECTED)
+                                    BluetoothCarConnection.CarConnectionState.STATE_CONNECTED) {
                                 Snackbar.make(mRootView, "Disconnected with " + btDevToStr(device) + ".",
                                         Snackbar.LENGTH_LONG).show();
+                                onBluetoothDisconnected(device);
+                            }
                             break;
                     }
                 }
@@ -110,15 +126,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        mRootView = findViewById(R.id.coordinatorLayout);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mRootView = (CoordinatorLayout) findViewById(R.id.coordinatorLayout);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
 
         mHandler = new Handler();
         mBluetoothManager = new BluetoothDeviceManager(this);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        mFAB = (FloatingActionButton) findViewById(R.id.fab);
+        mFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 /* If BT is on, we launch device picker here. Or we launch in onActivityResult */
@@ -132,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        mMenu = menu;
         return true;
     }
 
@@ -143,7 +160,8 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_disconnect) {
+            mBinder.getService().disconnect();
             return true;
         }
 
@@ -184,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Mainly for activating Bluetooth
+     * Mainly for activating Bluetooth (after Bluetooth picker)
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -198,5 +216,57 @@ public class MainActivity extends AppCompatActivity {
                         .show();
             }
         }
+    }
+
+    /**
+     * Perform layout/text changes after BT connected.
+     * This is not a callback.
+     */
+    private void onBluetoothConnected(BluetoothDevice device) {
+        animateToolbarColor(R.color.colorPrimary, R.color.colorAccent, 500);
+        animateStatusBarColor(R.color.colorPrimaryDark, R.color.colorAccentDark, 500);
+        ObjectAnimator.ofFloat(mFAB, "alpha", 1f, 0f).setDuration(500).start();
+        mFAB.setVisibility(View.GONE);
+        mMenu.getItem(0).setVisible(true);
+        mToolbar.setTitle(getString(R.string.app_name) + " - " + device.getName());
+    }
+
+    private void onBluetoothDisconnected(BluetoothDevice device) {
+        animateToolbarColor(R.color.colorAccent, R.color.colorPrimary, 500);
+        animateStatusBarColor(R.color.colorAccentDark, R.color.colorPrimaryDark, 500);
+        mFAB.setVisibility(View.VISIBLE);
+        ObjectAnimator.ofFloat(mFAB, "alpha", 0f, 1f).setDuration(500).start();
+        mMenu.getItem(0).setVisible(false);
+        mToolbar.setTitle(getString(R.string.app_name));
+    }
+
+    private void animateToolbarColor(@ColorRes int oldColor, @ColorRes int newColor, long duration) {
+        int oldValue = getResources().getColor(oldColor);
+        int newValue = getResources().getColor(newColor);
+
+        ValueAnimator valueAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), oldValue, newValue);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mToolbar.setBackgroundColor((int) animation.getAnimatedValue());
+            }
+        });
+        valueAnimator.setDuration(duration);
+        valueAnimator.start();
+    }
+
+    private void animateStatusBarColor(@ColorRes int oldColor, @ColorRes int newColor, long duration) {
+        int oldValue = getResources().getColor(oldColor);
+        int newValue = getResources().getColor(newColor);
+
+        ValueAnimator valueAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), oldValue, newValue);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mRootView.setStatusBarBackgroundColor((int) animation.getAnimatedValue());
+            }
+        });
+        valueAnimator.setDuration(duration);
+        valueAnimator.start();
     }
 }
