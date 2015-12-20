@@ -143,6 +143,11 @@ public class MainActivity extends AppCompatActivity {
                     mBluetoothManager.pickDevice(bluetoothDevicePickResultHandler);
             }
         });
+
+        getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.frame_container, new NoDeviceFragment())
+                .commit();
     }
 
     @Override
