@@ -89,6 +89,10 @@ public class BluetoothCarConnection {
     private void setState(CarConnectionState newState) {
         mLastState = mState;
         mState = newState;
+        notifyStateChanged();
+    }
+
+    public void notifyStateChanged() {
         if (mListener != null) {
             mListener.onCarConnectionStateChanged(this);
         }
@@ -115,7 +119,15 @@ public class BluetoothCarConnection {
     public void update(@NonNull BluetoothDevice device,
                        @Nullable ConnectionStateChangeListener listener) {
         if (mState == CarConnectionState.STATE_CONNECTED) {
-            disconnect();
+            if (device.getAddress().equals(mBluetoothDevice.getAddress())) {
+                Log.d(TAG, "update: Already connected to the same device. Just notify.");
+                mListener = listener;
+                notifyStateChanged();
+                return;
+            } else {
+                Log.d(TAG, "update: Already connected to different device. Disconnect first.");
+                disconnect();
+            }
         } else if (mState == CarConnectionState.STATE_CONNECTING) {
             Log.i(TAG, "update: The previous connection is CONNECTING.");
             // TODO: 2015/12/19 disconnect();?
