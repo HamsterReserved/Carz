@@ -231,19 +231,31 @@ public class MainActivity extends AppCompatActivity {
     private void onBluetoothConnected(BluetoothDevice device) {
         animateToolbarColor(R.color.colorPrimary, R.color.colorAccent, 500);
         animateStatusBarColor(R.color.colorPrimaryDark, R.color.colorAccentDark, 500);
+
         ObjectAnimator.ofFloat(mFAB, "alpha", 1f, 0f).setDuration(500).start();
         mFAB.setVisibility(View.GONE);
+
         mMenu.getItem(0).setVisible(true);
         mToolbar.setTitle(getString(R.string.app_name) + " - " + device.getName());
+        getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.frame_container, new ControllerFragment())
+                .commit();
     }
 
     private void onBluetoothDisconnected(BluetoothDevice device) {
         animateToolbarColor(R.color.colorAccent, R.color.colorPrimary, 500);
         animateStatusBarColor(R.color.colorAccentDark, R.color.colorPrimaryDark, 500);
+
         mFAB.setVisibility(View.VISIBLE);
         ObjectAnimator.ofFloat(mFAB, "alpha", 0f, 1f).setDuration(500).start();
+
         mMenu.getItem(0).setVisible(false);
         mToolbar.setTitle(getString(R.string.app_name));
+        getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.frame_container, new NoDeviceFragment())
+                .commit();
     }
 
     private void animateToolbarColor(@ColorRes int oldColor, @ColorRes int newColor, long duration) {
