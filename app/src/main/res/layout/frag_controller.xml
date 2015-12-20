@@ -15,23 +15,33 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:layout_marginBottom="2dp"
+            android:layout_weight="1"
+            android:background="@drawable/controller_button"/>
 
         <Button
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:layout_marginTop="2dp"
+            android:layout_weight="1"
+            android:background="@drawable/controller_button"/>
     </LinearLayout>
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_disconnect"
+    <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_margin="@dimen/fab_margin"
-        android:layout_weight="1"
-        android:src="@mipmap/ic_clear"
-        app:backgroundTint="@color/colorAccentDark"/>
+        android:layout_marginTop="12dp"
+        android:layout_weight="1">
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_disconnect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_margin="@dimen/fab_margin"
+            android:src="@mipmap/ic_clear"
+            app:backgroundTint="@color/colorAccentDark"/>
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -42,12 +52,16 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:layout_marginBottom="2dp"
+            android:layout_weight="1"
+            android:background="@drawable/controller_button"/>
 
         <Button
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:layout_marginTop="2dp"
+            android:layout_weight="1"
+            android:background="@drawable/controller_button"/>
     </LinearLayout>
 
 </LinearLayout>
