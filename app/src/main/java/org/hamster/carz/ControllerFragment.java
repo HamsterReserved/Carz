@@ -5,7 +5,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -53,14 +52,9 @@ public class ControllerFragment extends Fragment {
         intent.setClass(getActivity(), BluetoothService.class);
         getActivity().bindService(intent, btServConn, 0);
 
-        mRootView = inflater.inflate(R.layout.frag_controller, container, false);
+        mRootView = inflater.inflate(R.layout.frag_touch_controller, container, false);
         mRootView.findViewById(R.id.fab_disconnect).setOnClickListener(fabOnClickListener);
         return mRootView;
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
     }
 
     @Override

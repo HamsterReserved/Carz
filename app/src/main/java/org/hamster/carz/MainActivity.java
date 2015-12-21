@@ -317,15 +317,46 @@ public class MainActivity extends AppCompatActivity {
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         mRootView.setFitsSystemWindows(false);
         Animation animSlideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up);
+        animSlideUp.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                getSupportActionBar().hide();
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
         mToolbar.startAnimation(animSlideUp);
-        getSupportActionBar().hide();
     }
 
     public void showBars() {
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         mRootView.setFitsSystemWindows(true);
         Animation animSlideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down);
+        animSlideDown.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                getSupportActionBar().show();
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
         mToolbar.startAnimation(animSlideDown);
-        getSupportActionBar().show();
+
     }
 }
