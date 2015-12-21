@@ -54,6 +54,10 @@ public class ControllerFragment extends Fragment {
 
         mRootView = inflater.inflate(R.layout.frag_touch_controller, container, false);
         mRootView.findViewById(R.id.fab_disconnect).setOnClickListener(fabOnClickListener);
+
+        View touchController = mRootView.findViewById(R.id.touch_area);
+        touchController.setOnTouchListener(new TouchControllerListener(null));
+
         return mRootView;
     }
 
