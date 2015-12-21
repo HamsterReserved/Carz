@@ -10,20 +10,29 @@ import java.util.ArrayList;
 /**
  * Created by Hamster on 2015/12/21.
  * <p/>
- * Listen for touch input on controller.
+ * Listen for touch events on controller.
  */
 public class TouchControllerListener implements View.OnTouchListener {
     private static final String TAG = "Carz_TouchCtrl";
+    private static final boolean VDBG = false;
     private int mWidth; /* This listener works with fullscreen views */
-    private BluetoothService mService;
-    private View.OnTouchListener mNextListener;
+    private int mHeight;
+    private View.OnTouchListener mOnTouchListener;
+    private OnTouchStateChangedListener mTouchStateChangedListener;
     private TouchState mLeftTouch;
     private TouchState mRightTouch;
 
-    TouchControllerListener(View.OnTouchListener listener) {
+    TouchControllerListener() {
         mLeftTouch = new TouchState();
         mRightTouch = new TouchState();
-        mNextListener = listener;
+    }
+
+    public void setTouchStateChangedListener(OnTouchStateChangedListener mTouchStateChangedListener) {
+        this.mTouchStateChangedListener = mTouchStateChangedListener;
+    }
+
+    public void setOnTouchListener(View.OnTouchListener mOnTouchListener) {
+        this.mOnTouchListener = mOnTouchListener;
     }
 
     @Override
@@ -40,16 +49,19 @@ public class TouchControllerListener implements View.OnTouchListener {
         /* Note that we use pointerIndex to obtain position, pointerId to identify finger */
 
         mWidth = v.getWidth();
+        mHeight = v.getHeight();
 
         switch (action) {
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_POINTER_UP:
-                Log.d(TAG, "onTouch: PUPPID " + event.getPointerId(event.getActionIndex()));
+                if (VDBG)
+                    Log.d(TAG, "onTouch: PUPPID " + pointerId);
                 removeFinger(pointerId);
                 break;
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_POINTER_DOWN:
-                Log.d(TAG, "onTouch: PDOWNPID " + event.getPointerId(event.getActionIndex()));
+                if (VDBG)
+                    Log.d(TAG, "onTouch: PDOWNPID " + pointerId);
                 addFinger(x, y, pointerId);
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -63,18 +75,20 @@ public class TouchControllerListener implements View.OnTouchListener {
         }
 
         onTouchStateChanged();
-        return mNextListener == null || mNextListener.onTouch(v, event);
+        return mOnTouchListener == null || mOnTouchListener.onTouch(v, event);
     }
 
     private void onTouchStateChanged() {
-
+        if (mTouchStateChangedListener != null) {
+            mTouchStateChangedListener.onTouchStateChanged(mLeftTouch, mRightTouch, mWidth, mHeight);
+        }
     }
 
     private void addFinger(int x, int y, int pointerId) {
         if (x < mWidth / 2) {
-            // Left side of screen
+            /* Left side of screen */
             if (mLeftTouch.isValid() && pointerId != mLeftTouch.mPointerId) {
-                // A new finger is in left area while there's already one
+                /* A new finger is in left area while there's already one */
                 Log.d(TAG, "addFinger: Refusing pointerId " + pointerId + " to enter left area");
                 return;
             }
@@ -102,8 +116,7 @@ public class TouchControllerListener implements View.OnTouchListener {
             1. A pressed in one area
             2. B pressed in the same area
             3. addFinger rejected B, so there is no data about B in TouchState(s)
-            4. A releases // TODO if A does not release, moving of B does not call this method
-            5. B moves, so this method is called only to find there is no such pointerId
+            4. B moves, so this method is called only to find there is no such pointerId
              */
             Log.i(TAG, "updateFinger: pointerId " + pointerId + " not found");
         }
@@ -155,7 +168,14 @@ public class TouchControllerListener implements View.OnTouchListener {
             return availableTouches.get(0);
     }
 
-    private class TouchState {
+    /**
+     * Provides tracking service of gestures in left/right half od screen.
+     */
+    public interface OnTouchStateChangedListener {
+        void onTouchStateChanged(TouchState left, TouchState right, int maxWidth, int maxHeight);
+    }
+
+    public class TouchState {
         public Point mStartPoint;
         public Point mCurrentPoint;
         public int mPointerId; /* Used for multi-touch */

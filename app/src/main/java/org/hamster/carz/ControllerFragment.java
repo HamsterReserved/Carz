@@ -15,7 +15,7 @@ import android.view.ViewGroup;
 /**
  * Created by Hamster on 2015/12/20.
  * <p/>
- * Bluetooth Car Controller. Consist of L/R/U/D buttons.
+ * Bluetooth Car Controller. Use left and right parts of screen as left/right motor speed controller.
  */
 public class ControllerFragment extends Fragment {
     private View mRootView;
@@ -55,8 +55,12 @@ public class ControllerFragment extends Fragment {
         mRootView = inflater.inflate(R.layout.frag_touch_controller, container, false);
         mRootView.findViewById(R.id.fab_disconnect).setOnClickListener(fabOnClickListener);
 
+        TouchControllerListener controllerListener = new TouchControllerListener();
         View touchController = mRootView.findViewById(R.id.touch_area);
-        touchController.setOnTouchListener(new TouchControllerListener(null));
+        touchController.setOnTouchListener(controllerListener);
+
+        BluetoothCommandSender commandSender = new BluetoothCommandSender(activity);
+        controllerListener.setTouchStateChangedListener(commandSender);
 
         return mRootView;
     }
