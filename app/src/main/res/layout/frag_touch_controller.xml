@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:app="http://schemas.android.com/apk/res-auto"
+             xmlns:custom="http://schemas.android.com/apk/res-auto"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
              android:background="@android:color/black">
@@ -21,4 +22,20 @@
         android:id="@+id/touch_area"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+
+    <org.hamster.carz.EnergyBar
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="left"
+        custom:barColor="#55b71c1c"
+        custom:barCount="10"
+        custom:spacing="10sp"/>
+
+    <org.hamster.carz.EnergyBar
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="right"
+        custom:barColor="#55b71c1c"
+        custom:barCount="10"
+        custom:spacing="10sp"/>
 </FrameLayout>

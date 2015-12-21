@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         case STATE_CONNECTING:
                             /* Will be replaced by later snacks */
-                            Snackbar.make(mRootView, "Connecting with " + btDevToStr(device) + "\u2026",
+                            Snackbar.make(mRootView, "Connecting with " + btDevToStr(device) + " \u2026",
                                     Snackbar.LENGTH_INDEFINITE).show();
                             break;
                         case STATE_CONNECTED:
