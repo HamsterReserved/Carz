@@ -142,6 +142,16 @@ public class BluetoothCarConnection {
         setState(CarConnectionState.STATE_DISCONNECTED);
     }
 
+    public void sendBytes(byte[] data) {
+        try {
+            mOutputStream.write(data);
+        } catch (IOException e) {
+            Log.e(TAG, "sendBytes: IO", e);
+            mErrorMessage = e.getLocalizedMessage();
+            setState(CarConnectionState.STATE_FAILED);
+        }
+    }
+
     public enum CarConnectionState {
         STATE_DISCONNECTED,
         STATE_CONNECTING,

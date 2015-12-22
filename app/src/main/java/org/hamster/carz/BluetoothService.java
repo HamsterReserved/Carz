@@ -8,8 +8,6 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import java.io.IOException;
-
 /**
  * Created by Hamster on 2015/12/19.
  * <p/>
@@ -27,6 +25,7 @@ public class BluetoothService extends Service {
 
     public void connect(BluetoothDevice device,
                         BluetoothCarConnection.ConnectionStateChangeListener listener) {
+        if (VDBG) Log.d(TAG, "connect: " + device.getAddress());
         if (mConnection != null) {
             mConnection.update(device, listener);
         } else {
@@ -45,11 +44,7 @@ public class BluetoothService extends Service {
     }
 
     public void sendBytes(byte[] data) {
-        try {
-            mConnection.getOutputStream().write(data);
-        } catch (IOException e) {
-            Log.e(TAG, "sendBytes: IO", e);
-        }
+        mConnection.sendBytes(data);
     }
 
     public void disconnect() {
@@ -60,7 +55,7 @@ public class BluetoothService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        if (VDBG) Log.d(TAG, "onBind: I'm bind.");
+        if (VDBG) Log.d(TAG, "onBind: I'm bound.");
         return new BluetoothServiceBinder();
     }
 
