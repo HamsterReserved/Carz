@@ -5,7 +5,6 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 
@@ -31,12 +30,14 @@ public class EnergyBar extends View {
      * barWidthBase/HeightBase: base size of a (unit 1) bar
      * barWidthDelta/HeightDelta: increment of bar width/height
      * maxWidth/Height: size of canvas
+     * drawWidth/Height: only draw below this threshold (like battery indicator/masking the rest of bars)
      */
     private int baseX, baseY,
             deltaX, deltaY,
             barWidthBase, barHeightBase,
             barWidthDelta, barHeightDelta,
-            maxHeight, maxWidth;
+            maxHeight, maxWidth,
+            drawMaxWidth, drawMaxHeight;
 
     public EnergyBar(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -79,16 +80,20 @@ public class EnergyBar extends View {
                 barHeightDelta = 0;
                 deltaX = 0;
                 deltaY = -(barHeightDelta + barHeightBase + mSpacing);
+                drawMaxWidth = maxWidth;
+                drawMaxHeight = maxHeight;
                 break;
             case Gravity.RIGHT:
                 baseX = maxWidth;
                 baseY = maxHeight;
-                barWidthBase = maxWidth / mBarCount;
-                barWidthDelta = -barWidthBase;
+                barWidthBase = -maxWidth / mBarCount;
+                barWidthDelta = barWidthBase;
                 barHeightBase = (maxHeight - ((mBarCount - 1) * mSpacing)) / mBarCount;
                 barHeightDelta = 0;
                 deltaX = 0;
                 deltaY = -(barHeightDelta + barHeightBase + mSpacing);
+                drawMaxWidth = maxWidth;
+                drawMaxHeight = maxHeight;
                 break;
         }
     }
@@ -107,8 +112,8 @@ public class EnergyBar extends View {
             canvas.drawRect(Math.min(currentX, targetX), Math.min(currentY, targetY),
                     Math.max(currentX, targetX), Math.max(currentY, targetY), mPaint);
             drawnBars++;
-            Log.i(TAG, "onDraw: drawRect " + Math.min(currentX, targetX) + " " + Math.min(currentY, targetY) + " " +
-                    Math.max(currentX, targetX) + " " + Math.max(currentY, targetY));
+            //Log.i(TAG, "onDraw: drawRect " + Math.min(currentX, targetX) + " " + Math.min(currentY, targetY) + " " +
+            //        Math.max(currentX, targetX) + " " + Math.max(currentY, targetY));
         }
     }
 
@@ -126,9 +131,25 @@ public class EnergyBar extends View {
 
         setMeasuredDimension(width, heightSize);
 
-        // TODO Is this proper?
+        // TODO Is this proper? padding?
         maxHeight = heightSize;
         maxWidth = width;
         calculateSizes();
+    }
+
+    /**
+     * Only draw such portion of bars
+     * <p/>
+     * TODO Add code for horizontal bars
+     *
+     * @param percentage Like battery percentage (0~1)
+     */
+    public void setDrawPercentage(float percentage) {
+        switch (mLayoutGravity) {
+            case Gravity.RIGHT:
+            case Gravity.LEFT:
+                drawMaxHeight = (int) (percentage * maxHeight);
+                break;
+        }
     }
 }
