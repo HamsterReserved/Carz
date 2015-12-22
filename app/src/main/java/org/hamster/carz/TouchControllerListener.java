@@ -18,17 +18,18 @@ public class TouchControllerListener implements View.OnTouchListener {
     private int mWidth; /* This listener works with fullscreen views */
     private int mHeight;
     private View.OnTouchListener mOnTouchListener;
-    private OnTouchStateChangedListener mTouchStateChangedListener;
+    private ArrayList<OnTouchStateChangedListener> mTouchStateChangedListeners;
     private TouchState mLeftTouch;
     private TouchState mRightTouch;
 
     TouchControllerListener() {
         mLeftTouch = new TouchState();
         mRightTouch = new TouchState();
+        mTouchStateChangedListeners = new ArrayList<>(2);
     }
 
-    public void setTouchStateChangedListener(OnTouchStateChangedListener mTouchStateChangedListener) {
-        this.mTouchStateChangedListener = mTouchStateChangedListener;
+    public void addTouchStateChangedListener(OnTouchStateChangedListener mTouchStateChangedListener) {
+        this.mTouchStateChangedListeners.add(mTouchStateChangedListener);
     }
 
     public void setOnTouchListener(View.OnTouchListener mOnTouchListener) {
@@ -79,8 +80,8 @@ public class TouchControllerListener implements View.OnTouchListener {
     }
 
     private void onTouchStateChanged() {
-        if (mTouchStateChangedListener != null) {
-            mTouchStateChangedListener.onTouchStateChanged(mLeftTouch, mRightTouch, mWidth, mHeight);
+        for (OnTouchStateChangedListener listener : mTouchStateChangedListeners) {
+            listener.onTouchStateChanged(mLeftTouch, mRightTouch, mWidth, mHeight);
         }
     }
 

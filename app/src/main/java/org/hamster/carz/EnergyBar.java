@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 
@@ -102,15 +103,29 @@ public class EnergyBar extends View {
     protected void onDraw(Canvas canvas) {
         int drawnBars = 0;
         int currentX, currentY, targetX, targetY;
+        int drawStartX, drawStartY, drawEndX, drawEndY;
         while (true) {
             /* Draw bars one by one */
+            if (drawnBars >= mBarCount) break;
             currentX = baseX + drawnBars * deltaX;
             currentY = baseY + drawnBars * deltaY;
             targetX = currentX + barWidthBase + drawnBars * barWidthDelta;
             targetY = currentY + barHeightBase + drawnBars * barHeightDelta;
-            if (drawnBars >= mBarCount) break;
-            canvas.drawRect(Math.min(currentX, targetX), Math.min(currentY, targetY),
-                    Math.max(currentX, targetX), Math.max(currentY, targetY), mPaint);
+            drawStartX = Math.min(currentX, targetX);
+            drawEndX = Math.max(currentX, targetX);
+            drawStartY = Math.min(currentY, targetY);
+            drawEndY = Math.max(currentY, targetY);
+            /* Respect drawMaxHeight/Width */
+            switch (mLayoutGravity) {
+                case Gravity.LEFT:
+                case Gravity.RIGHT:
+                    if (baseY - drawStartY > drawMaxHeight) {
+                        drawStartY = baseY - drawMaxHeight;
+                        drawnBars = mBarCount; /* Terminate drawing now */
+                    }
+                    break;
+            }
+            canvas.drawRect(drawStartX, drawStartY, drawEndX, drawEndY, mPaint);
             drawnBars++;
             //Log.i(TAG, "onDraw: drawRect " + Math.min(currentX, targetX) + " " + Math.min(currentY, targetY) + " " +
             //        Math.max(currentX, targetX) + " " + Math.max(currentY, targetY));
@@ -137,6 +152,10 @@ public class EnergyBar extends View {
         calculateSizes();
     }
 
+    public float getDrawPercentage() {
+        return (float) drawMaxHeight / maxHeight;
+    }
+
     /**
      * Only draw such portion of bars
      * <p/>
@@ -149,6 +168,8 @@ public class EnergyBar extends View {
             case Gravity.RIGHT:
             case Gravity.LEFT:
                 drawMaxHeight = (int) (percentage * maxHeight);
+                invalidate();
+                Log.d(TAG, "setDrawPercentage: drawMaxHeight is " + drawMaxHeight);
                 break;
         }
     }
