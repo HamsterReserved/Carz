@@ -38,7 +38,6 @@ public class MainActivity extends AppCompatActivity {
     private Menu mMenu;
 
     private Handler mHandler;
-    private boolean isServiceRunning = false;
 
     private BluetoothDevice mDeviceToConnect;
     private BluetoothDeviceManager mBluetoothManager;
@@ -107,27 +106,20 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (VDBG) Log.d(TAG, "onServiceConnected: +1");
-            isServiceRunning = true;
             mBinder = (BluetoothService.BluetoothServiceBinder) service;
-            if (mDeviceToConnect != null) {
-                mBinder.getService().connect(mDeviceToConnect, bluetoothStateChangeListener);
-            }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             if (VDBG) Log.d(TAG, "onServiceDisconnected: -1");
-            isServiceRunning = false;
         }
     };
     private BluetoothDeviceManager.BluetoothDevicePickResultHandler
             bluetoothDevicePickResultHandler = new BluetoothDeviceManager.BluetoothDevicePickResultHandler() {
         @Override
         public void onDevicePicked(BluetoothDevice device) {
-            Intent intent = new Intent();
-            intent.setClass(MainActivity.this, BluetoothService.class);
-            bindService(intent, btServiceConn, BIND_AUTO_CREATE);
             mDeviceToConnect = device;
+            mBinder.getService().connect(device, bluetoothStateChangeListener);
         }
     };
 
@@ -152,6 +144,11 @@ public class MainActivity extends AppCompatActivity {
                     mBluetoothManager.pickDevice(bluetoothDevicePickResultHandler);
             }
         });
+
+
+        Intent intent = new Intent();
+        intent.setClass(MainActivity.this, BluetoothService.class);
+        bindService(intent, btServiceConn, BIND_AUTO_CREATE);
 
         getFragmentManager()
                 .beginTransaction()
@@ -184,9 +181,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        if (isServiceRunning) unbindService(btServiceConn);
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(btServiceConn);
     }
 
     private String btDevToStr(BluetoothDevice device) {

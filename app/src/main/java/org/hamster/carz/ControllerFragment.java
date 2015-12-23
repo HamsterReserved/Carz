@@ -3,6 +3,7 @@ package org.hamster.carz;
 import android.animation.ObjectAnimator;
 import android.app.Fragment;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
@@ -54,7 +55,7 @@ public class ControllerFragment extends Fragment {
 
         Intent intent = new Intent();
         intent.setClass(getActivity(), BluetoothService.class);
-        getActivity().bindService(intent, btServConn, 0);
+        getActivity().bindService(intent, btServConn, Context.BIND_AUTO_CREATE);
 
         mRootView = inflater.inflate(R.layout.frag_touch_controller, container, false);
         mRootView.findViewById(R.id.fab_disconnect).setOnClickListener(fabOnClickListener);
@@ -79,6 +80,7 @@ public class ControllerFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
+        getActivity().unbindService(btServConn);
         final MainActivity activity = (MainActivity) getActivity();
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -88,26 +90,35 @@ public class ControllerFragment extends Fragment {
         }, 500);
     }
 
+    /**
+     * Adjusts EnergyBars' height according to the distance fingers moved.
+     */
     private class BarHeightAdjuster implements TouchControllerListener.OnTouchStateChangedListener {
         private ObjectAnimator animatorLeft;
         private ObjectAnimator animatorRight;
 
-        /* For pointer up events*/
+        public BarHeightAdjuster() {
+            animatorLeft = ObjectAnimator.ofFloat(mLeftBar, "DrawPercentage", 0); // 0 is stub
+            animatorRight = ObjectAnimator.ofFloat(mRightBar, "DrawPercentage", 0);
+        }
+
         @Override
         public void onTouchStateChanged(TouchControllerListener.TouchState left,
                                         TouchControllerListener.TouchState right,
                                         int maxWidth, int maxHeight) {
-            if (!left.isValid() || !right.isValid()) {
+            if (!(left.isValid() && right.isValid())) {
+                float percentLeft = mLeftBar.getDrawPercentage();
+                float percentRight = mRightBar.getDrawPercentage();
                 /* No/One finger is on screen. Animate the bars back */
-                if (mLeftBar.getDrawPercentage() != 0) {
-                    animatorLeft = ObjectAnimator.ofFloat(mLeftBar, "DrawPercentage", mLeftBar.getDrawPercentage(), 0)
-                            .setDuration(1000);
+                if (percentLeft != 0) {
+                    animatorLeft.setFloatValues(percentLeft, 0);
+                    animatorLeft.setDuration(1000);
                     animatorLeft.setInterpolator(new DecelerateInterpolator(5f));
                     animatorLeft.start();
                 }
-                if (mRightBar.getDrawPercentage() != 0) {
-                    animatorRight = ObjectAnimator.ofFloat(mRightBar, "DrawPercentage", mRightBar.getDrawPercentage(), 0)
-                            .setDuration(1000);
+                if (percentRight != 0) {
+                    animatorRight.setFloatValues(percentRight, 0);
+                    animatorRight.setDuration(1000);
                     animatorRight.setInterpolator(new DecelerateInterpolator(5f));
                     animatorRight.start();
                 }

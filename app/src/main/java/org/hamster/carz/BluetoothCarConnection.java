@@ -28,19 +28,7 @@ public class BluetoothCarConnection {
     private CarConnectionState mState = CarConnectionState.STATE_DISCONNECTED;
     private ConnectionStateChangeListener mListener;
     private UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    private Thread detectionThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            while (!stopDetectionFlag) {
-                try {
-                    mInputStream.read();
-                } catch (IOException e) {
-                    setState(CarConnectionState.STATE_DISCONNECTED);
-                    stopDetectionFlag = true;
-                }
-            }
-        }
-    });
+    private Thread detectionThread;
 
     BluetoothCarConnection(@NonNull BluetoothDevice device,
                            @Nullable ConnectionStateChangeListener listener) {
@@ -48,6 +36,21 @@ public class BluetoothCarConnection {
     }
 
     public void connect() {
+        // Initialize it every connect
+        detectionThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (!stopDetectionFlag) {
+                    try {
+                        mInputStream.read();
+                    } catch (IOException e) {
+                        setState(CarConnectionState.STATE_DISCONNECTED);
+                        stopDetectionFlag = true;
+                    }
+                }
+            }
+        });
+
         setState(CarConnectionState.STATE_CONNECTING);
         try {
             mSocket = mBluetoothDevice.createRfcommSocketToServiceRecord(SPP_UUID);
