@@ -36,7 +36,7 @@ public class BluetoothCarConnection {
     }
 
     public void connect() {
-        // Initialize it every connect
+        // Initialize it on every connection
         detectionThread = new Thread(new Runnable() {
             @Override
             public void run() {

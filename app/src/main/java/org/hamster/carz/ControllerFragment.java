@@ -24,17 +24,17 @@ public class ControllerFragment extends Fragment {
     private View mRootView;
     private EnergyBar mLeftBar;
     private EnergyBar mRightBar;
-    private BluetoothService.BluetoothServiceBinder mBinder;
+    private BluetoothService mService;
     private View.OnClickListener fabOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            mBinder.getService().disconnect();
+            mService.disconnect();
         }
     };
     private ServiceConnection btServConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mBinder = (BluetoothService.BluetoothServiceBinder) service;
+            mService = ((BluetoothService.BluetoothServiceBinder) service).getService();
         }
 
         @Override

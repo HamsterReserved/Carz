@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
 
     private Handler mHandler;
 
-    private BluetoothDevice mDeviceToConnect;
     private BluetoothDeviceManager mBluetoothManager;
     private BluetoothCarConnection.ConnectionStateChangeListener
             bluetoothStateChangeListener = new BluetoothCarConnection.ConnectionStateChangeListener() {
@@ -101,12 +100,12 @@ public class MainActivity extends AppCompatActivity {
             }, 200); // delay 200ms to let the slide-in animation display correctly
         }
     };
-    private BluetoothService.BluetoothServiceBinder mBinder;
+    private BluetoothService mService;
     private ServiceConnection btServiceConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             if (VDBG) Log.d(TAG, "onServiceConnected: +1");
-            mBinder = (BluetoothService.BluetoothServiceBinder) service;
+            mService = ((BluetoothService.BluetoothServiceBinder) service).getService();
         }
 
         @Override
@@ -118,8 +117,7 @@ public class MainActivity extends AppCompatActivity {
             bluetoothDevicePickResultHandler = new BluetoothDeviceManager.BluetoothDevicePickResultHandler() {
         @Override
         public void onDevicePicked(BluetoothDevice device) {
-            mDeviceToConnect = device;
-            mBinder.getService().connect(device, bluetoothStateChangeListener);
+            mService.connect(device, bluetoothStateChangeListener);
         }
     };
 
@@ -173,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_disconnect) {
-            mBinder.getService().disconnect();
+            mService.disconnect();
             return true;
         }
 

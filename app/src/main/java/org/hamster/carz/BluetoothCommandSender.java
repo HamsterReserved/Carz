@@ -38,27 +38,32 @@ public class BluetoothCommandSender implements TouchControllerListener.OnTouchSt
      */
     private static final int MAX_VALUE = 127;
     /**
+     * Convert minHeight to this value. Low values will cause motors to stop working (and burning)
+     */
+    private static final int MIN_VALUE = 30;
+    /**
      * Set this to true and we will send human readable outputs to Bluetooth port.
      */
     private static final boolean DEBUG_MODE = false;
-    private BluetoothService.BluetoothServiceBinder mBinder;
+    private BluetoothService mService;
+    private Context mContext;
+    private ServiceConnection btServConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mService = ((BluetoothService.BluetoothServiceBinder) service).getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
 
     BluetoothCommandSender(Context context) {
-        ServiceConnection btServConn = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                mBinder = (BluetoothService.BluetoothServiceBinder) service;
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-
-            }
-        };
-
         Intent intent = new Intent();
         intent.setClass(context, BluetoothService.class);
         context.bindService(intent, btServConn, 0);
+        mContext = context;
     }
 
     @Override
@@ -74,9 +79,9 @@ public class BluetoothCommandSender implements TouchControllerListener.OnTouchSt
             case 1:
                 /* No/One finger is on screen. Stop. */
                 if (DEBUG_MODE)
-                    mBinder.getService().sendBytes("HS:S\r\n".getBytes());
+                    mService.sendBytes("HS:S\r\n".getBytes());
                 else
-                    mBinder.getService().sendBytes(new byte[]{'H', 'S', 0, 0});
+                    mService.sendBytes(new byte[]{'H', 'S', 0, 0});
                 break;
             case 2:
                 /* Two finger is on screen. Android's y-axis is different from human's sense */
@@ -88,15 +93,27 @@ public class BluetoothCommandSender implements TouchControllerListener.OnTouchSt
                 /* Ignore close deltas (make it easier to go straight) */
                 if (Math.abs(deltaXL - deltaXR) < maxHeight * IGNORE_DELTA_THRESHOLD)
                     deltaXL = deltaXR = Math.min(deltaXL, deltaXR);
-                /* Convert max value */
-                deltaXL = (int) ((float) deltaXL / maxHeight * MAX_VALUE);
-                deltaXR = (int) ((float) deltaXR / maxHeight * MAX_VALUE);
+                /* Convert values */
+                if (deltaXL >= 0)
+                    deltaXL = (int) ((float) deltaXL / maxHeight * (MAX_VALUE - MIN_VALUE) + MIN_VALUE);
+                else
+                    deltaXL = (int) ((float) deltaXL / maxHeight * (MAX_VALUE - MIN_VALUE) - MIN_VALUE);
+                if (deltaXR >= 0)
+                    deltaXR = (int) ((float) deltaXR / maxHeight * (MAX_VALUE - MIN_VALUE) + MIN_VALUE);
+                else
+                    deltaXR = (int) ((float) deltaXR / maxHeight * (MAX_VALUE - MIN_VALUE) - MIN_VALUE);
                 /* Send it */
                 if (DEBUG_MODE)
-                    mBinder.getService().sendBytes(String.format("HS:L%03d,R%03d\r\n", deltaXL, deltaXR).getBytes());
+                    mService.sendBytes(String.format("HS:L%03d,R%03d\r\n", deltaXL, deltaXR).getBytes());
                 else
-                    mBinder.getService().sendBytes(new byte[]{'H', 'S', (byte) deltaXL, (byte) deltaXR});
+                    mService.sendBytes(new byte[]{'H', 'S', (byte) deltaXL, (byte) deltaXR});
                 break;
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        mContext.unbindService(btServConn);
+        super.finalize();
     }
 }
