@@ -20,6 +20,7 @@ import android.view.View;
 public class EnergyBar extends View {
 
     private static final String TAG = "Carz_EnergyBar";
+    private static final boolean VDBG = false;
     private int mLayoutGravity;
     private int mBackgroundColor;
     private int mSpacing;
@@ -127,8 +128,10 @@ public class EnergyBar extends View {
             }
             canvas.drawRect(drawStartX, drawStartY, drawEndX, drawEndY, mPaint);
             drawnBars++;
-            //Log.i(TAG, "onDraw: drawRect " + Math.min(currentX, targetX) + " " + Math.min(currentY, targetY) + " " +
-            //        Math.max(currentX, targetX) + " " + Math.max(currentY, targetY));
+            if (VDBG) {
+                Log.d(TAG, "onDraw: drawRect " + Math.min(currentX, targetX) + " " + Math.min(currentY, targetY) + " " +
+                        Math.max(currentX, targetX) + " " + Math.max(currentY, targetY));
+            }
         }
     }
 
@@ -169,7 +172,8 @@ public class EnergyBar extends View {
             case Gravity.LEFT:
                 drawMaxHeight = (int) (percentage * maxHeight);
                 invalidate();
-                Log.d(TAG, "setDrawPercentage: drawMaxHeight is " + drawMaxHeight);
+                if (VDBG)
+                    Log.d(TAG, "setDrawPercentage: drawMaxHeight is " + drawMaxHeight);
                 break;
         }
     }
