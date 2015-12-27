@@ -44,17 +44,17 @@ public class EnergyBar extends View {
     public EnergyBar(Context context, AttributeSet attrs) {
         super(context, attrs);
         int[] set = {
-                android.R.attr.layout_gravity,
-                R.attr.barColor,
                 R.attr.spacing,
                 R.attr.barCount,
+                R.attr.barColor,
+                android.R.attr.layout_gravity,
         };
 
         TypedArray a = context.obtainStyledAttributes(attrs, set);
-        mLayoutGravity = a.getInt(0, Gravity.LEFT);
-        mBackgroundColor = a.getColor(1, getResources().getColor(android.R.color.holo_red_dark));
-        mSpacing = a.getDimensionPixelSize(2, 24);
-        mBarCount = a.getInt(3, 7);
+        mBackgroundColor = a.getColor(2, getResources().getColor(android.R.color.holo_red_dark));
+        mSpacing = a.getDimensionPixelSize(0, 24);
+        mBarCount = a.getInt(1, 7);
+        mLayoutGravity = a.getInt(3, Gravity.LEFT);
         a.recycle();
 
         mPaint = new Paint();

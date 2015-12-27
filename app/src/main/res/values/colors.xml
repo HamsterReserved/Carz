@@ -4,7 +4,6 @@
     <color name="colorPrimaryDark">#212121</color>
     <color name="colorAccent">#DD2C00</color>
     <color name="colorAccentDark">#b71c1c</color>
-    <color name="colorAccentHidden">#3d0909</color>
     <color name="colorBackground">#757575</color>
     <color name="colorTipText">#9e9e9e</color>
 </resources>

@@ -25,7 +25,7 @@
 
     <org.hamster.carz.EnergyBar
         android:id="@+id/energy_bar_left"
-        android:layout_width="80dp"
+        android:layout_width="90dp"
         android:layout_height="match_parent"
         android:layout_gravity="left"
         custom:barColor="@color/colorAccentDark"
@@ -34,7 +34,7 @@
 
     <org.hamster.carz.EnergyBar
         android:id="@+id/energy_bar_right"
-        android:layout_width="80dp"
+        android:layout_width="90dp"
         android:layout_height="match_parent"
         android:layout_gravity="right"
         custom:barColor="@color/colorAccentDark"
