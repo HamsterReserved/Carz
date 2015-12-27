@@ -14,7 +14,7 @@ import java.util.ArrayList;
  */
 public class TouchControllerListener implements View.OnTouchListener {
     private static final String TAG = "Carz_TouchCtrl";
-    private static final boolean VDBG = false;
+    private static final boolean VDBG = true;
     private int mWidth; /* This listener works with fullscreen views */
     private int mHeight;
     private View.OnTouchListener mOnTouchListener;
@@ -88,7 +88,7 @@ public class TouchControllerListener implements View.OnTouchListener {
     private void addFinger(int x, int y, int pointerId) {
         if (x < mWidth / 2) {
             /* Left side of screen */
-            if (mLeftTouch.isValid() && pointerId != mLeftTouch.mPointerId) {
+            if (mLeftTouch.isValid()) {
                 /* A new finger is in left area while there's already one */
                 Log.d(TAG, "addFinger: Refusing pointerId " + pointerId + " to enter left area");
                 return;
@@ -96,7 +96,7 @@ public class TouchControllerListener implements View.OnTouchListener {
             mLeftTouch.mStartPoint.set(x, y);
             mLeftTouch.mPointerId = pointerId;
         } else {
-            if (mRightTouch.isValid() && pointerId != mRightTouch.mPointerId) {
+            if (mRightTouch.isValid()) {
                 Log.d(TAG, "addFinger: Refusing pointerId " + pointerId + " to enter right area");
                 return;
             }
@@ -119,7 +119,8 @@ public class TouchControllerListener implements View.OnTouchListener {
             3. addFinger rejected B, so there is no data about B in TouchState(s)
             4. B moves, so this method is called only to find there is no such pointerId
              */
-            Log.i(TAG, "updateFinger: pointerId " + pointerId + " not found");
+            if (VDBG)
+                Log.i(TAG, "updateFinger: pointerId " + pointerId + " not found");
         }
     }
 
@@ -130,7 +131,8 @@ public class TouchControllerListener implements View.OnTouchListener {
         if (state != null) {
             state.invalidate();
         } else {
-            Log.i(TAG, "removeFinger: pointerId " + pointerId + " is not found");
+            if (VDBG)
+                Log.i(TAG, "removeFinger: pointerId " + pointerId + " is not found");
         }
     }
 
@@ -194,7 +196,7 @@ public class TouchControllerListener implements View.OnTouchListener {
         }
 
         public boolean isValid() {
-            return !mStartPoint.equals(-1, -1);
+            return !mStartPoint.equals(-1, -1) && !mCurrentPoint.equals(-1, -1);
         }
 
         public boolean equals(int x, int y) {

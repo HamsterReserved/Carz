@@ -10,6 +10,7 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +22,8 @@ import android.view.animation.DecelerateInterpolator;
  * Bluetooth Car Controller. Use left and right parts of screen as left/right motor speed controller.
  */
 public class ControllerFragment extends Fragment {
+    private static final String TAG = "Carz_CtrlFrag";
+    private static final boolean VDBG = true;
     private View mRootView;
     private EnergyBar mLeftBar;
     private EnergyBar mRightBar;
@@ -106,6 +109,11 @@ public class ControllerFragment extends Fragment {
         public void onTouchStateChanged(TouchControllerListener.TouchState left,
                                         TouchControllerListener.TouchState right,
                                         int maxWidth, int maxHeight) {
+            if (VDBG)
+                Log.d(TAG, "barHeight: onTouchStateChanged: left.start = " + left.mStartPoint
+                        + "left.end = " + left.mCurrentPoint
+                        + "right.start = " + right.mStartPoint
+                        + "right.end = " + right.mCurrentPoint);
             if (!(left.isValid() && right.isValid())) {
                 float percentLeft = mLeftBar.getDrawPercentage();
                 float percentRight = mRightBar.getDrawPercentage();
