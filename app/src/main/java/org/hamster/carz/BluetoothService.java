@@ -39,10 +39,6 @@ public class BluetoothService extends Service {
         }).start();
     }
 
-    public BluetoothCarConnection.CarConnectionState getConnectionState() {
-        return mConnection.getState();
-    }
-
     public void sendBytes(byte[] data) {
         mConnection.sendBytes(data);
     }

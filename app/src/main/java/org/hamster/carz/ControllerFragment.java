@@ -23,7 +23,7 @@ import android.view.animation.DecelerateInterpolator;
  */
 public class ControllerFragment extends Fragment {
     private static final String TAG = "Carz_CtrlFrag";
-    private static final boolean VDBG = true;
+    private static final boolean VDBG = false;
     private View mRootView;
     private EnergyBar mLeftBar;
     private EnergyBar mRightBar;

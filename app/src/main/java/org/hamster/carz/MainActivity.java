@@ -27,7 +27,7 @@ import android.view.View;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "Carz-MainActivity";
-    private static final boolean VDBG = true;
+    private static final boolean VDBG = false;
     private static final int REQCODE_BLUETOOTH_ON = 0;
 
     private CoordinatorLayout mRootView;

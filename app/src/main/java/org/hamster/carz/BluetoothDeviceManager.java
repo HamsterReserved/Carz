@@ -15,7 +15,7 @@ import android.util.Log;
  */
 public class BluetoothDeviceManager implements BluetoothDevicePicker {
     private static final String TAG = "Carz_BTDeviceMan";
-    private static final boolean VDBG = true;
+    private static final boolean VDBG = false;
 
     protected Context context;
 

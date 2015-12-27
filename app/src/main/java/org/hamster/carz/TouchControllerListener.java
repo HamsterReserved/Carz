@@ -14,7 +14,7 @@ import java.util.ArrayList;
  */
 public class TouchControllerListener implements View.OnTouchListener {
     private static final String TAG = "Carz_TouchCtrl";
-    private static final boolean VDBG = true;
+    private static final boolean VDBG = false;
     private int mWidth; /* This listener works with fullscreen views */
     private int mHeight;
     private View.OnTouchListener mOnTouchListener;
