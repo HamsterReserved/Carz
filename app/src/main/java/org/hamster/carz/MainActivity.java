@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
             bluetoothDevicePickResultHandler = new BluetoothDeviceManager.BluetoothDevicePickResultHandler() {
         @Override
         public void onDevicePicked(BluetoothDevice device) {
-            mService.connect(device, bluetoothStateChangeListener);
+            mService.connect(device, bluetoothStateChangeListener, null);
         }
     };
 

@@ -26,13 +26,15 @@ public class BluetoothCarConnection {
     private String mErrorMessage;
     private CarConnectionState mLastState = CarConnectionState.STATE_DISCONNECTED;
     private CarConnectionState mState = CarConnectionState.STATE_DISCONNECTED;
-    private ConnectionStateChangeListener mListener;
+    private ConnectionStateChangeListener mStateListener;
+    private DataReceivedListener mDataListener;
     private UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private Thread detectionThread;
 
     BluetoothCarConnection(@NonNull BluetoothDevice device,
-                           @Nullable ConnectionStateChangeListener listener) {
-        update(device, listener);
+                           @Nullable ConnectionStateChangeListener stateListener,
+                           @Nullable DataReceivedListener dataListener) {
+        update(device, stateListener, dataListener);
     }
 
     public void connect() {
@@ -42,7 +44,10 @@ public class BluetoothCarConnection {
             public void run() {
                 while (!stopDetectionFlag) {
                     try {
-                        mInputStream.read();
+                        int data = mInputStream.read();
+                        if (mDataListener != null) {
+                            mDataListener.onDataReceived(data);
+                        }
                     } catch (IOException e) {
                         setState(CarConnectionState.STATE_DISCONNECTED);
                         stopDetectionFlag = true;
@@ -101,8 +106,8 @@ public class BluetoothCarConnection {
     }
 
     public void notifyStateChanged() {
-        if (mListener != null) {
-            mListener.onCarConnectionStateChanged(this);
+        if (mStateListener != null) {
+            mStateListener.onCarConnectionStateChanged(this);
         }
     }
 
@@ -122,14 +127,17 @@ public class BluetoothCarConnection {
      * For re-use the connection object. This will cause a disconnection before updating.
      *
      * @param device   Target device
-     * @param listener Can be null. Callback when connection state changes.
+     * @param stateListener Can be null. Callback when connection state changes.
+     * @param dataListener Can be null. Callback when one byte of data is received.
      */
     public void update(@NonNull BluetoothDevice device,
-                       @Nullable ConnectionStateChangeListener listener) {
+                       @Nullable ConnectionStateChangeListener stateListener,
+                       @Nullable DataReceivedListener dataListener) {
         if (mState == CarConnectionState.STATE_CONNECTED) {
             if (device.getAddress().equals(mBluetoothDevice.getAddress())) {
                 Log.d(TAG, "update: Already connected to the same device. Just notify.");
-                mListener = listener;
+                mStateListener = stateListener;
+                mDataListener = dataListener;
                 notifyStateChanged();
                 return;
             } else {
@@ -141,7 +149,8 @@ public class BluetoothCarConnection {
             // TODO: 2015/12/19 disconnect();?
         }
         mBluetoothDevice = device;
-        mListener = listener;
+        mStateListener = stateListener;
+        mDataListener = dataListener;
         setState(CarConnectionState.STATE_DISCONNECTED);
     }
 
@@ -155,6 +164,10 @@ public class BluetoothCarConnection {
         }
     }
 
+    public void setOnDataReceivedListener(DataReceivedListener listener) {
+        mDataListener = listener;
+    }
+
     public enum CarConnectionState {
         STATE_DISCONNECTED,
         STATE_CONNECTING,
@@ -165,5 +178,9 @@ public class BluetoothCarConnection {
 
     public interface ConnectionStateChangeListener {
         void onCarConnectionStateChanged(BluetoothCarConnection connection);
+    }
+
+    public interface DataReceivedListener {
+        void onDataReceived(int data);
     }
 }

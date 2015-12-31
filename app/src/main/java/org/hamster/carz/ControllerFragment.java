@@ -15,6 +15,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.TextView;
+
+import java.util.ArrayList;
 
 /**
  * Created by Hamster on 2015/12/20.
@@ -27,6 +30,8 @@ public class ControllerFragment extends Fragment {
     private View mRootView;
     private EnergyBar mLeftBar;
     private EnergyBar mRightBar;
+    private TextView mDistanceText;
+    private ArrayList<Integer> mBytesReceived;
     private BluetoothService mService;
     private View.OnClickListener fabOnClickListener = new View.OnClickListener() {
         @Override
@@ -38,6 +43,7 @@ public class ControllerFragment extends Fragment {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mService = ((BluetoothService.BluetoothServiceBinder) service).getService();
+            mService.setOnDataReceivedListener(new DataReceiver());
         }
 
         @Override
@@ -60,10 +66,14 @@ public class ControllerFragment extends Fragment {
         intent.setClass(getActivity(), BluetoothService.class);
         getActivity().bindService(intent, btServConn, Context.BIND_AUTO_CREATE);
 
+        mBytesReceived = new ArrayList<>(4);
+
         mRootView = inflater.inflate(R.layout.frag_touch_controller, container, false);
         mRootView.findViewById(R.id.fab_disconnect).setOnClickListener(fabOnClickListener);
         mLeftBar = (EnergyBar) mRootView.findViewById(R.id.energy_bar_left);
         mRightBar = (EnergyBar) mRootView.findViewById(R.id.energy_bar_right);
+        mDistanceText = (TextView) mRootView.findViewById(R.id.tv_bt);
+
         mLeftBar.setDrawPercentage(0);
         mRightBar.setDrawPercentage(0);
 
@@ -91,6 +101,36 @@ public class ControllerFragment extends Fragment {
                 activity.showBars();
             }
         }, 500);
+    }
+
+    private class DataReceiver implements BluetoothCarConnection.DataReceivedListener {
+        @Override
+        public void onDataReceived(int data) {
+            mBytesReceived.add(data);
+            if (mBytesReceived.size() == 4) {
+                // Received 4 bytes
+                if (mBytesReceived.get(0) == 'D') {
+                    // Data integrity
+                    final String distanceString;
+                    if (mBytesReceived.get(1) < 10) {
+                        distanceString = "Current space ahead: " +
+                                String.valueOf(mBytesReceived.get(1)
+                                        + mBytesReceived.get(2) * 0.1f
+                                        + mBytesReceived.get(3) * 0.01f) +
+                                "m";
+                    } else {
+                        distanceString = "To the Infinity and Beyond!";
+                    }
+                    mDistanceText.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mDistanceText.setText(distanceString);
+                        }
+                    });
+                    mBytesReceived.clear();
+                }
+            }
+        }
     }
 
     /**

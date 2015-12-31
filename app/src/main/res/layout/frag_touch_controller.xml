@@ -40,4 +40,17 @@
         custom:barColor="@color/colorAccentDark"
         custom:barCount="10"
         custom:spacing="10sp"/>
+
+
+    <TextView
+        android:id="@+id/tv_bt"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="12dp"
+        android:gravity="bottom"
+        android:maxLines="10"
+        android:scrollbars="vertical"
+        android:textColor="@color/colorPrimary"
+        android:textSize="14sp"/>
 </FrameLayout>

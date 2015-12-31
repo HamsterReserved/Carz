@@ -24,12 +24,13 @@ public class BluetoothService extends Service {
     private BluetoothCarConnection mConnection;
 
     public void connect(BluetoothDevice device,
-                        BluetoothCarConnection.ConnectionStateChangeListener listener) {
+                        BluetoothCarConnection.ConnectionStateChangeListener stateListener,
+                        BluetoothCarConnection.DataReceivedListener dataListener) {
         if (VDBG) Log.d(TAG, "connect: " + device.getAddress());
         if (mConnection != null) {
-            mConnection.update(device, listener);
+            mConnection.update(device, stateListener, dataListener);
         } else {
-            mConnection = new BluetoothCarConnection(device, listener);
+            mConnection = new BluetoothCarConnection(device, stateListener, dataListener);
         }
         new Thread(new Runnable() {
             @Override
@@ -46,6 +47,10 @@ public class BluetoothService extends Service {
     public void disconnect() {
         if (mConnection == null) return;
         mConnection.disconnect();
+    }
+
+    public void setOnDataReceivedListener(BluetoothCarConnection.DataReceivedListener listener) {
+        mConnection.setOnDataReceivedListener(listener);
     }
 
     @Nullable
